@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kestrel Home — Warranty Claim Fraud Scoring</title>
+  <style>
+    :root {
+      --primary: #1a365d;
+      --primary-light: #2b6cb0;
+      --accent: #d69e2e;
+      --danger: #e53e3e;
+      --success: #38a169;
+      --warning: #dd6b20;
+      --bg: #f7fafc;
+      --card-bg: #ffffff;
+      --text: #2d3748;
+      --text-muted: #718096;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); line-height: 1.5; padding: 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { background: var(--primary); color: white; padding: 20px 28px; border-radius: 10px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.07); }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p { font-size: 0.9rem; color: #cbd5e0; }
+    .badge-cap { background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; }
+    
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; }
+    .card { background: var(--card-bg); border-radius: 10px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    h2 { font-size: 1.15rem; margin-bottom: 16px; color: var(--primary); font-weight: 600; }
+    
+    .preset-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .btn-preset { background: #edf2f7; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .btn-preset:hover { background: #e2e8f0; color: var(--primary); }
+    
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+    input, select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; color: var(--text); }
+    input:focus, select:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    
+    .btn-submit { width: 100%; background: var(--primary-light); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+    .btn-submit:hover { background: var(--primary); }
+    
+    /* Result section */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+    .score-banner { text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid transparent; }
+    .score-banner.HIGH { background: #fff5f5; border-color: #feb2b2; }
+    .score-banner.MODERATE { background: #fffaf0; border-color: #fbd38d; }
+    .score-banner.LOW { background: #f0fff4; border-color: #9ae6b4; }
+    
+    .score-num { font-size: 2.5rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+    .HIGH .score-num { color: var(--danger); }
+    .MODERATE .score-num { color: var(--warning); }
+    .LOW .score-num { color: var(--success); }
+    
+    .tier-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .HIGH .tier-badge { background: var(--danger); color: white; }
+    .MODERATE .tier-badge { background: var(--warning); color: white; }
+    .LOW .tier-badge { background: var(--success); color: white; }
+    
+    .rec-box { background: #edf2f7; border-left: 4px solid var(--primary-light); padding: 12px 16px; border-radius: 4px; margin-bottom: 20px; }
+    .rec-title { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
+    .rec-text { font-size: 0.95rem; font-weight: 600; color: var(--primary); }
+    
+    .reasons-list { list-style: none; margin-bottom: 20px; }
+    .reasons-list li { position: relative; padding-left: 24px; margin-bottom: 10px; font-size: 0.88rem; line-height: 1.4; }
+    .reasons-list li::before { content: "•"; position: absolute; left: 8px; color: var(--primary-light); font-size: 1.2rem; line-height: 1; }
+    
+    .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+    .stats-table td { padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .stats-table td:last-child { text-align: right; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1>Kestrel Home Appliances — Warranty Review Desk</h1>
+        <p>Pre-Payout Automated Risk Scoring & Decision Support System</p>
+      </div>
+      <div class="badge-cap">Monthly Review Cap: 40 Claims</div>
+    </header>
+
+    <div class="grid">
+      <!-- Input Column -->
+      <div class="card">
+        <h2>Inspect Warranty Claim</h2>
+        
+        <div class="preset-bar">
+          <span style="font-size:0.78rem; font-weight:600; align-self:center; color:var(--text-muted);">Quick Presets:</span>
+          <button type="button" class="btn-preset" onclick="loadPreset('policy')">Policy Gamer (< Rs 2k)</button>
+          <button type="button" class="btn-preset" onclick="loadPreset('pcb')">High-Ticket Fraud</button>
+          <button type="button" class="btn-preset" onclick="loadPreset('genuine')">Genuine Customer</button>
+        </div>
+
+        <form id="claimForm" onsubmit="submitClaim(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Claim ID</label>
+              <input type="text" id="claim_id" required value="WC711887">
+            </div>
+            <div class="form-group">
+              <label>Partner ID</label>
+              <input type="text" id="partner_id" required value="SP3160">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Product SKU</label>
+              <select id="sku">
+                <option value="KH-AF-01">KH-AF-01 (Air Fryer - Rs 5,199)</option>
+                <option value="KH-AF-02">KH-AF-02 (Air Fryer - Rs 6,499)</option>
+                <option value="KH-AF-03" selected>KH-AF-03 (Air Fryer - Rs 8,773)</option>
+                <option value="KH-WP-01">KH-WP-01 (Water Purifier - Rs 11,999)</option>
+                <option value="KH-WP-03">KH-WP-03 (Water Purifier - Rs 20,248)</option>
+                <option value="KH-RV-03">KH-RV-03 (Robot Vacuum - Rs 29,698)</option>
+                <option value="KH-CF-01">KH-CF-01 (Ceiling Fan - Rs 2,799)</option>
+                <option value="KH-MG-02">KH-MG-02 (Mixer Grinder - Rs 3,999)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Product Serial</label>
+              <input type="text" id="product_serial" required value="KH-354589154">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Claim Amount (INR)</label>
+              <input type="number" id="claim_amount_inr" step="0.5" required value="1985">
+            </div>
+            <div class="form-group">
+              <label>Days Since Purchase</label>
+              <input type="number" id="days_since_purchase" required value="120">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Customer Prior Claims</label>
+              <input type="number" id="customer_prior_claims" required value="1">
+            </div>
+            <div class="form-group">
+              <label>Photo Attached?</label>
+              <select id="photo_attached">
+                <option value="Y" selected>Yes (Y)</option>
+                <option value="N">No (N)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Reported Fault Description</label>
+            <select id="claim_description">
+              <option value="blade jammed" selected>blade jammed</option>
+              <option value="motor not running">motor not running</option>
+              <option value="loud noise while running">loud noise while running</option>
+              <option value="power button not working">power button not working</option>
+              <option value="water leaking">water leaking</option>
+              <option value="burning smell">burning smell</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btnSubmit">Score Claim Risk</button>
+        </form>
+      </div>
+
+      <!-- Output Column -->
+      <div class="card" id="resultCard">
+        <h2>Decision & Explanation</h2>
+        
+        <div id="emptyPrompt" class="empty-state">
+          <p>Submit claim details or choose a preset on the left to view real-time risk assessment.</p>
+        </div>
+
+        <div id="resultContent" style="display:none;">
+          <div class="score-banner" id="scoreBanner">
+            <div class="score-num" id="scoreValue">0.0%</div>
+            <div class="tier-badge" id="tierBadge">PENDING</div>
+          </div>
+
+          <div class="rec-box">
+            <div class="rec-title">Operational Recommendation</div>
+            <div class="rec-text" id="recText">-</div>
+          </div>
+
+          <h3 style="font-size:0.9rem; margin-bottom:8px; font-weight:700;">Plain-Language Rationale for Claims Officer:</h3>
+          <ul class="reasons-list" id="reasonsList"></ul>
+
+          <h3 style="font-size:0.9rem; margin-top:20px; margin-bottom:8px; font-weight:700;">Financial Impact:</h3>
+          <table class="stats-table">
+            <tr>
+              <td>Claim Amount Requested:</td>
+              <td id="amtStat">Rs 0</td>
+            </tr>
+            <tr>
+              <td>Goodwill Risk if Held Wrongly:</td>
+              <td>Rs 380 (Policy §4)</td>
+            </tr>
+            <tr>
+              <td>Net Fraud Exposure Prevented:</td>
+              <td id="netStat" style="color:var(--danger)">Rs 0</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const presets = {
+      policy: {
+        claim_id: "WC710942",
+        partner_id: "SP3318",
+        sku: "KH-AF-03",
+        product_serial: "KH789423145",
+        claim_amount_inr: 1995,
+        days_since_purchase: 212,
+        customer_prior_claims: 0,
+        photo_attached: "Y",
+        claim_description: "motor not running"
+      },
+      pcb: {
+        claim_id: "WC711262",
+        partner_id: "SP3275",
+        sku: "KH-RV-03",
+        product_serial: "KH882190455",
+        claim_amount_inr: 17866,
+        days_since_purchase: 224,
+        customer_prior_claims: 2,
+        photo_attached: "Y",
+        claim_description: "power button not working"
+      },
+      genuine: {
+        claim_id: "WC711357",
+        partner_id: "SP3071",
+        sku: "KH-CF-01",
+        product_serial: "KH644876325",
+        claim_amount_inr: 859,
+        days_since_purchase: 120,
+        customer_prior_claims: 0,
+        photo_attached: "Y",
+        claim_description: "loud noise while running"
+      }
+    };
+
+    function loadPreset(key) {
+      const p = presets[key];
+      if (!p) return;
+      document.getElementById("claim_id").value = p.claim_id;
+      document.getElementById("partner_id").value = p.partner_id;
+      document.getElementById("sku").value = p.sku;
+      document.getElementById("product_serial").value = p.product_serial;
+      document.getElementById("claim_amount_inr").value = p.claim_amount_inr;
+      document.getElementById("days_since_purchase").value = p.days_since_purchase;
+      document.getElementById("customer_prior_claims").value = p.customer_prior_claims;
+      document.getElementById("photo_attached").value = p.photo_attached;
+      document.getElementById("claim_description").value = p.claim_description;
+      document.getElementById("btnSubmit").click();
+    }
+
+    async function submitClaim(e) {
+      e.preventDefault();
+      const payload = {
+        claim_id: document.getElementById("claim_id").value,
+        partner_id: document.getElementById("partner_id").value,
+        sku: document.getElementById("sku").value,
+        product_serial: document.getElementById("product_serial").value,
+        claim_amount_inr: parseFloat(document.getElementById("claim_amount_inr").value),
+        days_since_purchase: parseInt(document.getElementById("days_since_purchase").value),
+        customer_prior_claims: parseInt(document.getElementById("customer_prior_claims").value),
+        photo_attached: document.getElementById("photo_attached").value,
+        claim_description: document.getElementById("claim_description").value
+      };
+
+      try {
+        const res = await fetch("/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        renderResult(data);
+      } catch (err) {
+        alert("Failed to connect to scoring service. Make sure FastAPI server is running.");
+      }
+    }
+
+    function renderResult(data) {
+      document.getElementById("emptyPrompt").style.display = "none";
+      document.getElementById("resultContent").style.display = "block";
+
+      const scorePct = (data.fraud_score * 100).toFixed(1) + "%";
+      document.getElementById("scoreValue").innerText = scorePct;
+
+      const banner = document.getElementById("scoreBanner");
+      banner.className = "score-banner";
+      
+      const badge = document.getElementById("tierBadge");
+      badge.innerText = data.risk_tier;
+
+      if (data.fraud_score >= 0.70) {
+        banner.classList.add("HIGH");
+      } else if (data.fraud_score >= 0.35) {
+        banner.classList.add("MODERATE");
+      } else {
+        banner.classList.add("LOW");
+      }
+
+      document.getElementById("recText").innerText = data.recommendation;
+
+      const list = document.getElementById("reasonsList");
+      list.innerHTML = "";
+      data.reasons.forEach(r => {
+        const li = document.createElement("li");
+        li.innerText = r;
+        list.appendChild(li);
+      });
+
+      document.getElementById("amtStat").innerText = "Rs " + Number(data.claim_amount_inr).toLocaleString("en-IN");
+      document.getElementById("netStat").innerText = data.fraud_score >= 0.70 ? "Rs " + Number(data.claim_amount_inr).toLocaleString("en-IN") : "Rs 0";
+    }
+  </script>
+</body>
+</html>

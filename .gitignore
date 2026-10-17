@@ -1,0 +1,26 @@
+# Data handling and privacy (Ops Policy v4.1 §10)
+data/
+Data_and_info/
+raw/
+*.csv
+!predictions.csv
+!reports/*.csv
+
+# Allow production artifacts
+!artifacts/*.joblib
+
+# Python cache and environments
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.env
+venv/
+.venv/
+env/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
