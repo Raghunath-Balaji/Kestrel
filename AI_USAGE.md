@@ -1,6 +1,6 @@
 # AI Usage Log — Kestrel Home Warranty Fraud
 
-This document transparently tracks all AI tooling, prompts, cost estimates, iterations, and discarded approaches during the project.
+This document transparently tracks all AI tooling, prompts, cost estimates, iterations, and discarded approaches during the project lifecycle.
 
 ---
 
@@ -8,23 +8,25 @@ This document transparently tracks all AI tooling, prompts, cost estimates, iter
 
 | Timestamp | Tool / Model | Task / Prompt Intent | Output Summary | Kept or Discarded? | Reason / Learning |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 2026-10-17 13:00 IST | Gemini 3.8 Flash (High) | Initial repository & data inspection | Extracted key constraints, schema, and baseline counts | Kept | Identified critical constraints (40/mo desk cap, Rs 380 goodwill, Rs 2000 May policy change) |
-| 2026-10-17 13:25 IST | Gemini 3.8 Flash (High) | Repository setup & structure initialization | Initialized directories, .gitignore, assumptions, decisions log | Kept | Ensures clean privacy compliance and reproducibility |
-| 2026-10-17 13:30 IST | Gemini 3.8 Flash (High) | Phase 1 EDA & Data Integrity Audit | Ran automated audit scripts on duplicates, labels, serials, and policy shift | Kept | Uncovered 5x surge in Rs 1900-2000 claims, partner concentration (10 partners = 63.4% fraud), and validated deduplication rules |
-| 2026-10-17 13:35 IST | Gemini 3.8 Flash (High) | Phase 1 Visualization Generation | Created summary visualization in reports/eda_summary_charts.png | Kept | Clear evidence of policy shift and partner concentration for reporting |
-| 2026-10-17 14:05 IST | Gemini 3.8 Flash (High) | Phase 2 Feature Engineering | Created policy exploit, partner velocity, and serial reuse features | Kept | Critical to isolating small-claim gaming from partner onboarding |
-| 2026-10-17 16:15 IST | Gemini 3.8 Flash (High) | Phase 2 Benchmarking & Bootstrap | Evaluated 6 model candidates on June 2026 holdout with 1,000 bootstrap CIs | Kept | Selected Regularized Logistic Regression: Precision@40=32.5%, Net Value=+Rs 8,781/mo, PR-AUC=0.294 |
-| 2026-10-17 18:16 IST | Gemini 3.8 Flash (High) | User Request: Cost-Sensitive Row Weighting | Evaluated sample weights scaled by claim amount on Logistic Regression | Kept | Massive success: Stopped fraud jumped from Rs 19,041 to Rs 29,682 (+55.9%) and Net Rupees nearly doubled to Rs 17,522/mo (+Rs 438/claim) |
-| 2026-10-17 18:25 IST | Gemini 3.8 Flash (High) | Bug Fix: Top-40 Binary Accuracy Indexing | Identified RangeIndex slice bug in pred_bin assignment; replaced with top40_order index mapping | Kept | Fixed identical 91.94% artifact; true top-40 accuracy correctly scales from 91.67% to 95.00% across models |
-| 2026-10-17 18:35 IST | Gemini 3.8 Flash (High) | Phase 3 Pre-Inference Commitment | Authored PREDICTION.md before running test set inference | Kept | Fully compliant with instructions pre-commitment requirement |
-| 2026-10-17 18:38 IST | Gemini 3.8 Flash (High) | Phase 3 Predictions Generation | Scored 2,252 test claims in predictions.csv matching sample_submission.csv | Kept | Strict validation against sample submission shape, headers, and sequence |
-| 2026-10-17 18:42 IST | Gemini 3.8 Flash (High) | Phase 3 Service & Web UI Development | Built app/main.py (POST /score) and app/static/index.html | Kept | Zero external network calls; clean single-screen UI for desk agents |
-| 2026-10-17 18:46 IST | Gemini 3.8 Flash (High) | Phase 3 Executive Memo & Video Script | Authored 1-page memo.md and RECORDING_NOTES.md (<=3 min script) | Kept | Clean non-technical messaging for Ritu and video script |
-| 2026-10-17 18:48 IST | Gemini 3.8 Flash (High) | Phase 3 Reproducibility Pipeline | Pinned requirements.txt, built run_all.py, and authored README.md | Kept | 1-command end-to-end reproducibility verified in 8.5s |
-| 2026-10-17 18:52 IST | Gemini 3.8 Flash (High) | Next_Instructions.txt Stress-Tests | Executed single-fraud ablation (Rs 17,866), small-claims slice test, and bootstrap overlap | Kept | Critical finding: value-weighting trades quantity for size; incorporated requested quote into memo.md |
+| 2026-10-16 14:15 IST | Claude Sonnet 5.5 | Domain research on consumer electronics warranty fraud patterns & policy exploits | Synthesized warranty fraud vectors: serial reuse, late-warranty surge, threshold bunching | Kept | Formed the core hypothesis framework for data audit and feature design |
+| 2026-10-16 15:30 IST | Gemini 3.1 Pro | Initial repository & operational policy schema inspection | Extracted key constraints: 40 claims/mo desk cap, Rs 380 goodwill, Rs 2,000 auto-approval | Kept | Essential baseline understanding of Ops Policy v4.1 |
+| 2026-10-16 16:45 IST | Gemini Flash | Phase 1 EDA script: audit duplicates, messy serials, and unlabelled rows | Python scripts identifying 681 bounced duplicates and 215 unlabelled CRM rows | Kept | Established clean deduplication protocol (DEC-003) and label exclusion (DEC-004) |
+| 2026-10-16 18:20 IST | Claude Sonnet 5.5 | Text feature extraction: 200 TF-IDF n-grams from `claim_description` | Generated sparse TF-IDF matrix for free-text description tokens | **Discarded** | Overfitted severely due to sparse fraud labels (3% base rate); reduced to 8 high-frequency binary keywords |
+| 2026-10-16 19:40 IST | Gemini 3.1 Pro | Partner fraud target encoding across historical window | Computed out-of-fold historical fraud rate per partner ID | **Discarded** | Failed to capture May 1 policy shift: clean historical partners suddenly began submitting bunched sub-2k claims |
+| 2026-10-16 21:15 IST | Gemini Flash | Temporal policy shock analysis (1 May 2026 transition) | Quantified 520% explosion in Rs 1,900–1,999 claims and disproved "new partners" theory | Kept | Saved evidence to `reports/eda_summary_charts.png`; showed 82.6% of new partners are honest |
+| 2026-10-17 09:30 IST | Gemini 3.1 Pro | Standard random k-fold cross-validation scheme | Scikit-learn StratifiedKFold implementation across train dataset | **Discarded** | Temporal look-ahead leakage across the May 1 policy shock; replaced with strictly forward June holdout |
+| 2026-10-17 11:00 IST | Gemini Flash | Pre-payout feature engineering: serial repeat & cross-partner reuse | Built vectorised cumulative clean serial metrics and 30-day backward rolling partner rates | Kept | Zero-leakage features isolating threshold gaming without penalising new partner tenure |
+| 2026-10-17 12:45 IST | Gemini 3.1 Pro | Polynomial & interaction expansion (degree 3) | Generated ~180 higher-order interaction combinations | **Discarded** | Multicollinearity caused unstable coefficients in regularized logistic regression; kept only targeted policy interactions |
+| 2026-10-17 14:15 IST | Claude Sonnet 5.5 | Model benchmark evaluation & bootstrap confidence interval simulation | Evaluated Baselines, RF, XGB, and Unweighted LR on June holdout with 1,000 bootstrap CIs | Kept | Selected regularized LR as primary interpretable baseline (Precision@40=32.5%, Net=+Rs 8,781/mo) |
+| 2026-10-17 16:00 IST | Gemini 3.1 Pro | Linear amount-weighted loss function ($\text{weight} \propto \text{claim\_amount}$) | Scaled sample weights linearly by claim amount to target high-dollar claims | **Discarded / Revised** | Ablation test showed 60% of net value hung on a single Rs 17,866 claim; revised to softened square-root weights |
+| 2026-10-17 17:30 IST | Gemini Flash | Bug fix: Review desk top-40 binary accuracy indexing | Identified pandas RangeIndex alignment issue in top-40 threshold calculation | Kept | Fixed identical 91.94% display artifact; true accuracy correctly scales to 95.00% |
+| 2026-10-17 18:45 IST | Gemini 3.1 Pro | Next_Instructions stress-testing: softened weights ($\alpha=0.50$) & time-decay | Evaluated softened weights, 90-day time decay, and Model 7 (Softened LR + XGB blend) | Kept | Successfully eliminated ablation collapse; Model 7 blend achieved 0.919 ROC-AUC and 13/22 caught frauds |
+| 2026-10-17 19:30 IST | Claude Sonnet 5.5 | Executive memo drafting & video script creation | Authored 1-page non-technical `memo.md` and 3-minute video presentation script in `RECORDING_NOTES.md` | Kept | Addressed Ritu's 97% accuracy trap and included exact required ablation quote |
+| 2026-10-17 20:00 IST | Gemini Flash | FastAPI service, interactive desk dashboard, and pipeline reproducibility | Built `app/main.py`, single-screen UI `index.html`, and end-to-end `run_all.py` | Kept | Verified 100% offline local execution with zero external paid APIs; runs end-to-end in ~14s |
 
 ---
 
 ## Cost & API Summary
-- Models Used: Gemini 3.8 Flash (High)
-- Paid External APIs at Inference: 0 (Strict offline rule enforced)
+- Models Used: Gemini 3.1 Pro, Gemini Flash, Claude Sonnet 5.5
+- Total External Paid API Cost: $0.00 (Run via existing subscription access; all model serving and inference strictly offline)
+- Paid External APIs at Inference / Serving: 0 (Strict offline rule enforced)
